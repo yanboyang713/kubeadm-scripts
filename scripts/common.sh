@@ -70,8 +70,12 @@ sudo apt-get install -y kubelet="$KUBERNETES_VERSION" kubectl="$KUBERNETES_VERSI
 sudo apt-get update -y
 sudo apt-get install -y jq
 
+
 IFACE=$(ip route show to match default | perl -nle 'if ( /dev\s+(\S+)/ ) {print $1}')
-local_ip="$(ip --json a s | jq -r '.[] | if .ifname == "$IFACE" then .addr_info[] | if .family == "inet" then .local else empty end else empty end')"
-sudo cat > /etc/default/kubelet << EOF
-KUBELET_EXTRA_ARGS=--node-ip=$local_ip
-EOF
+echo
+
+local_ip=$(ip --json a s | jq -r --arg IFACE "$IFACE" '.[] | if .ifname == $IFACE then .addr_info[] | if .family == "inet" then .local else empty end else empty end')
+
+echo "$IFACE interface with IP: $local_ip"
+
+printf "KUBELET_EXTRA_ARGS=--node-ip=%s\n" "$local_ip" | sudo tee -a /etc/default/kubelet
