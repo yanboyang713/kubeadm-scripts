@@ -31,30 +31,35 @@ disable_swap_permanently() {
     if (( $(echo "$swap_size < 1" | bc -l) )); then
         echo "The Swap size is less than 1 bytes."
     else
-        echo "The variable is not less than 1."
         # Print the swap size
         echo "Swap Size: $swap_size"
         # disable swap permanently
         comment_lines_with_keyword "swap" "/etc/fstab"
+        # apply the new swap setting
+        mount -a
+        # Disable Swap
+        sudo swapoff -a
     fi
 
 }
 
-echo "K8S required Disable Swap"
-read -p "Do you want to Disable Swap Permanently? Otherwise Disable Temporarily (yes/no): " answer
+disable_swap(){
+    echo "K8S required Disable Swap"
+    read -p "Do you want to Disable Swap Permanently? Otherwise Disable Temporarily (yes/no): " answer
 
-case "$answer" in
-    [Yy][Ee][Ss]|[Yy])
-        echo "Disable Swap Permanently"
-        disable_swap_permanently
-        # apply the new swap setting
-        mount -a
-        ;;
-    [Nn][Oo]|[Nn])
-        echo "Disable Swap Temporarily"
-        sudo swapoff -a
-        ;;
-    *)
-        echo "Invalid input. Please enter 'yes' or 'no'."
-        ;;
-esac
+    case "$answer" in
+        [Yy][Ee][Ss]|[Yy])
+            echo "Disable Swap Permanently"
+            disable_swap_permanently
+            ;;
+        [Nn][Oo]|[Nn])
+            echo "Disable Swap Temporarily"
+            sudo swapoff -a
+            ;;
+        *)
+            echo "Invalid input. Please enter 'yes' or 'no'."
+            ;;
+    esac
+}
+
+disable_swap
