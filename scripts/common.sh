@@ -91,7 +91,7 @@ sudo sysctl --system
 }
 
 # Install CRI-O Runtime
-install_CRI-O_runtime(){
+install_CRI_O_runtime(){
 
     dist_id=$(lsb_release -is)   # This gets the distributor ID (e.g., Ubuntu)
     version=$(lsb_release -rs)   # This gets the release version of the OS
