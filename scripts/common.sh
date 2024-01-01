@@ -202,7 +202,7 @@ main() {
 
 }
 
-set -euxo pipefail
+#set -euxo pipefail
 
 # Variable Declaration
 KUBERNETES_VERSION="1.26.1-00"
