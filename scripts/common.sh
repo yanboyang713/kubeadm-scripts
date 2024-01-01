@@ -127,7 +127,7 @@ install_CRI_O_runtime(){
 
     # Update and install crio and crio-tools.
     apt-get update
-    apt-get install cri-o cri-o-runc
+    apt-get install -y cri-o cri-o-runc
 
     # Reload the systemd configurations and enable cri-o.
     systemctl daemon-reload
@@ -188,7 +188,7 @@ main() {
 
 }
 
-set -euxo pipefail
+#set -euxo pipefail
 
 # Variable Declaration
 KUBERNETES_VERSION="1.28.1-00"
