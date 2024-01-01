@@ -198,7 +198,7 @@ main() {
     enable_iptables_bridged_traffic
 
     # Install CRI-O Runtime
-    install_CRI-O_runtime $KUBERNETES_VERSION
+    install_CRI_O_runtime $KUBERNETES_VERSION
 
     # Install kubelet, kubectl and Kubeadm
     install_kubelet_kubectl_kubeadm $KUBERNETES_VERSION
