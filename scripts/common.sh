@@ -183,12 +183,6 @@ set_node_IP(){
 
 }
 
-set -euxo pipefail
-
-# Variable Declaration
-
-KUBERNETES_VERSION="1.26.1-00"
-
 main() {
     # disable swap
     disable_swap
@@ -207,6 +201,11 @@ main() {
     set_node_IP
 
 }
+
+set -euxo pipefail
+
+# Variable Declaration
+KUBERNETES_VERSION="1.26.1-00"
 
 # Call the main function
 main "$@"
