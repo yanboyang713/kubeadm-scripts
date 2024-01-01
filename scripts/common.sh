@@ -18,9 +18,9 @@ comment_lines_with_keyword() {
         fi
     done < "$file"
     # Make file backup
-    sudo mv "$file" "$file.backup"
+    mv "$file" "$file.backup"
     # Overwrite the original file with the modified content
-    sudo mv "$temp_file" "$file"
+    mv "$temp_file" "$file"
     echo "Modified content written back to $file"
 }
 
@@ -40,7 +40,7 @@ disable_swap_permanently() {
         # apply the new swap setting
         mount -a
         # Disable Swap
-        sudo swapoff -a
+        swapoff -a
     fi
 
 }
@@ -57,7 +57,7 @@ disable_swap(){
             ;;
         [Nn][Oo]|[Nn])
             echo "Disable Swap Temporarily"
-            sudo swapoff -a
+            swapoff -a
             ;;
         *)
             echo "Invalid input. Please enter 'yes' or 'no'."
@@ -69,24 +69,24 @@ disable_swap(){
 enable_iptables_bridged_traffic(){
 
 # Create the .conf file to load the modules at bootup
-cat <<EOF | sudo tee /etc/modules-load.d/crio.conf
+cat <<EOF | tee /etc/modules-load.d/crio.conf
 overlay
 br_netfilter
 EOF
 
 # Execute the following commands to enable overlayFS & VxLan pod communication.
-sudo modprobe overlay
-sudo modprobe br_netfilter
+modprobe overlay
+modprobe br_netfilter
 
 # Set up required sysctl params, these persist across reboots.
-cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
+cat <<EOF | tee /etc/sysctl.d/99-kubernetes-cri.conf
 net.bridge.bridge-nf-call-iptables  = 1
 net.ipv4.ip_forward                 = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 EOF
 
 # Reload the parameters.
-sudo sysctl --system
+sysctl --system
 
 }
 
@@ -115,37 +115,23 @@ install_CRI_O_runtime(){
 
     VERSION="$(echo $1 | grep -oE '[0-9]+\.[0-9]+')"
 
+    echo $VERSION
+
     # Add CRI source and key
     echo "deb [signed-by=/usr/share/keyrings/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /" > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
     echo "deb [signed-by=/usr/share/keyrings/libcontainers-crio-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/ /" > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.list
 
-    sudo mkdir -p /usr/share/keyrings
+    mkdir -p /usr/share/keyrings
     curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key | gpg --dearmor -o /usr/share/keyrings/libcontainers-archive-keyring.gpg
     curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/Release.key | gpg --dearmor -o /usr/share/keyrings/libcontainers-crio-archive-keyring.gpg
 
     # Update and install crio and crio-tools.
-    sudo apt-get update
-    sudo apt-get install cri-o cri-o-runc
-
-# Add CRI source and key
-#cat <<EOF | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
-#deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /
-#EOF
-#cat <<EOF | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:"$VERSION".list
-#deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/ /
-#EOF
-
-# Add the gpg keys.
-#curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:"$VERSION"/$OS/Release.key | sudo apt-key --keyring /etc/apt/trusted.gpg.d/libcontainers.gpg add -
-#curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key | sudo apt-key --keyring /etc/apt/trusted.gpg.d/libcontainers.gpg add -
-
-# Update and install crio and crio-tools.
-#sudo apt-get update
-#sudo apt-get install cri-o cri-o-runc -y
+    apt-get update
+    apt-get install cri-o cri-o-runc
 
     # Reload the systemd configurations and enable cri-o.
-    sudo systemctl daemon-reload
-    sudo systemctl enable crio --now
+    systemctl daemon-reload
+    systemctl enable crio --now
 
     echo "CRI runtime installed susccessfully"
 }
@@ -153,33 +139,33 @@ install_CRI_O_runtime(){
 # Install kubelet, kubectl and Kubeadm
 install_kubelet_kubectl_kubeadm(){
     # Install the required dependencies.
-    sudo apt-get update
-    sudo apt-get install -y apt-transport-https ca-certificates curl
-    sudo curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+    apt-get update
+    apt-get install -y apt-transport-https ca-certificates curl
+    curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
 
     # Add the GPG key and apt repository.
-    echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+    echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
 
     # Update apt and install the latest version of kubelet, kubeadm, and kubectl.
-    sudo apt-get update -y
-    sudo apt-get install -y kubelet=$1 kubectl=$1 kubeadm=$1
+    apt-get update -y
+    apt-get install -y kubelet=$1 kubectl=$1 kubeadm=$1
 
     # Add hold to the packages to prevent upgrades.
-    sudo apt-mark hold kubelet kubeadm kubectl
+    apt-mark hold kubelet kubeadm kubectl
 
 }
 
 #Add the node IP to KUBELET_EXTRA_ARGS.
 set_node_IP(){
-    sudo apt-get update -y
-    sudo apt-get install -y jq
+    apt-get update -y
+    apt-get install -y jq
 
     IFACE=$(ip route show to match default | perl -nle 'if ( /dev\s+(\S+)/ ) {print $1}')
     local_ip=$(ip --json a s | jq -r --arg IFACE "$IFACE" '.[] | if .ifname == $IFACE then .addr_info[] | if .family == "inet" then .local else empty end else empty end')
 
     echo "$IFACE interface with IP: $local_ip"
 
-    printf "KUBELET_EXTRA_ARGS=--node-ip=%s\n" "$local_ip" | sudo tee -a /etc/default/kubelet
+    printf "KUBELET_EXTRA_ARGS=--node-ip=%s\n" "$local_ip" | tee -a /etc/default/kubelet
 
 }
 
@@ -187,7 +173,7 @@ main() {
     # disable swap
     disable_swap
 
-    sudo apt-get update -y
+    apt-get update -y
 
     enable_iptables_bridged_traffic
 
@@ -202,10 +188,10 @@ main() {
 
 }
 
-#set -euxo pipefail
+set -euxo pipefail
 
 # Variable Declaration
-KUBERNETES_VERSION="1.26.1-00"
+KUBERNETES_VERSION="1.28.1-00"
 
 # Call the main function
 main "$@"
